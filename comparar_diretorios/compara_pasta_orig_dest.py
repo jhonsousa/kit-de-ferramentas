@@ -6,7 +6,6 @@ def calcular_hash_arquivo_completo(caminho_arquivo, tamanho_bloco=4096):
     """Calcula o hash SHA-256 de um arquivo inteiro, lendo em blocos."""
     sha256 = hashlib.sha256()
     with open(caminho_arquivo, 'rb') as f:
-        # Lê o arquivo em blocos até o final
         for bloco in iter(lambda: f.read(tamanho_bloco), b""):
             sha256.update(bloco)
     return sha256.hexdigest()
@@ -53,6 +52,10 @@ def comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096):
         caminhos_pasta2 = arquivos_pasta2[hash_arquivo]
         arquivos_exclusivos_pasta2.extend(caminhos_pasta2)
 
+    # Ordenar arquivos exclusivos por caminho completo, priorizando a estrutura de diretório e nome
+    arquivos_exclusivos_pasta1.sort(key=lambda x: (os.path.dirname(x), os.path.basename(x)))
+    arquivos_exclusivos_pasta2.sort(key=lambda x: (os.path.dirname(x), os.path.basename(x)))
+
     # Contagem de arquivos em cada pasta e arquivos exclusivos
     total_arquivos_pasta1 = sum(len(caminhos) for caminhos in arquivos_pasta1.values())
     total_arquivos_pasta2 = sum(len(caminhos) for caminhos in arquivos_pasta2.values())
@@ -78,12 +81,12 @@ pasta2 = r'D:\comparar\pastaB'
     total_arquivos_iguais
 ) = comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096)
 
-# Exibir relatórios
-print("Arquivos exclusivos na pasta 1:")
+# Exibir relatórios ordenados
+print("Arquivos exclusivos na pasta 1 (ordenados por diretório e nome):")
 for caminho in arquivos_exclusivos_pasta1:
     print(f"  - {caminho}")
 
-print("\nArquivos exclusivos na pasta 2:")
+print("\nArquivos exclusivos na pasta 2 (ordenados por diretório e nome):")
 for caminho in arquivos_exclusivos_pasta2:
     print(f"  - {caminho}")
 
