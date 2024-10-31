@@ -31,19 +31,15 @@ def encontrar_arquivos_repetidos(caminho_pasta, tamanho_bloco=4096):
     # Filtrar hashes com mais de um arquivo (arquivos repetidos)
     arquivos_repetidos = {hash: caminhos for hash, caminhos in arquivos_por_hash.items() if len(caminhos) > 1}
     
-    # Contagem de arquivos repetidos
-    total_arquivos_repetidos = sum(len(caminhos) - 1 for caminhos in arquivos_repetidos.values())
+    # Contagem de grupos de arquivos repetidos
+    total_grupos_repetidos = len(arquivos_repetidos)
     
-    return arquivos_repetidos, total_arquivos, total_arquivos_repetidos
+    return arquivos_repetidos, total_arquivos, total_grupos_repetidos
 
 # Exemplo de uso
 if __name__ == "__main__":
-    pasta = r'.'  # Caminho da pasta atual, ajuste para o caminho desejado
-    arquivos_repetidos, total_arquivos, total_arquivos_repetidos = encontrar_arquivos_repetidos(pasta)
-
-    # Exibir dados estatísticos
-    print(f"\nTotal de arquivos na pasta: {total_arquivos}")
-    print(f"Total de arquivos repetidos: {total_arquivos_repetidos}")
+    pasta = r'D:\comparar\pastaA'  # Caminho da pasta atual, ajuste para o caminho desejado
+    arquivos_repetidos, total_arquivos, total_grupos_repetidos = encontrar_arquivos_repetidos(pasta)
 
     # Exibir arquivos repetidos
     if arquivos_repetidos:
@@ -54,3 +50,7 @@ if __name__ == "__main__":
                 print(f"  - {caminho}")
     else:
         print("\nNenhum arquivo repetido encontrado.")
+
+    # Exibir dados estatísticos
+    print(f"\nTotal de arquivos na pasta: {total_arquivos}")
+    print(f"Total de grupos de arquivos repetidos: {total_grupos_repetidos}")
