@@ -10,8 +10,8 @@ def calcular_hash_arquivo(caminho_arquivo, tamanho_bloco=4096):
             sha256.update(bloco)
     return sha256.hexdigest()
 
-def encontrar_arquivos_duplicados(caminho_pasta, tamanho_bloco=4096):
-    """Varre a pasta e encontra arquivos duplicados com base no hash SHA-256."""
+def encontrar_arquivos_repetidos(caminho_pasta, tamanho_bloco=4096):
+    """Varre a pasta e encontra arquivos repetidos com base no hash SHA-256."""
     arquivos_por_hash = {}
     total_arquivos = sum(len(arquivos) for _, _, arquivos in os.walk(caminho_pasta))
     
@@ -28,29 +28,29 @@ def encontrar_arquivos_duplicados(caminho_pasta, tamanho_bloco=4096):
                 
                 pbar.update(1)
 
-    # Filtrar hashes com mais de um arquivo (arquivos duplicados)
-    arquivos_duplicados = {hash: caminhos for hash, caminhos in arquivos_por_hash.items() if len(caminhos) > 1}
+    # Filtrar hashes com mais de um arquivo (arquivos repetidos)
+    arquivos_repetidos = {hash: caminhos for hash, caminhos in arquivos_por_hash.items() if len(caminhos) > 1}
     
-    # Contagem de arquivos duplicados
-    total_arquivos_duplicados = sum(len(caminhos) - 1 for caminhos in arquivos_duplicados.values())
+    # Contagem de arquivos repetidos
+    total_arquivos_repetidos = sum(len(caminhos) - 1 for caminhos in arquivos_repetidos.values())
     
-    return arquivos_duplicados, total_arquivos, total_arquivos_duplicados
+    return arquivos_repetidos, total_arquivos, total_arquivos_repetidos
 
 # Exemplo de uso
 if __name__ == "__main__":
-    pasta = r'D:\comparar\pastaB'  # Caminho da pasta atual, ajuste para o caminho desejado
-    arquivos_duplicados, total_arquivos, total_arquivos_duplicados = encontrar_arquivos_duplicados(pasta)
+    pasta = r'.'  # Caminho da pasta atual, ajuste para o caminho desejado
+    arquivos_repetidos, total_arquivos, total_arquivos_repetidos = encontrar_arquivos_repetidos(pasta)
 
-    # Exibir arquivos duplicados
-    if arquivos_duplicados:
-        print("\nArquivos duplicados encontrados:")
-        for hash_arquivo, caminhos in arquivos_duplicados.items():
+    # Exibir dados estatísticos
+    print(f"\nTotal de arquivos na pasta: {total_arquivos}")
+    print(f"Total de arquivos repetidos: {total_arquivos_repetidos}")
+
+    # Exibir arquivos repetidos
+    if arquivos_repetidos:
+        print("\nArquivos repetidos encontrados:")
+        for hash_arquivo, caminhos in arquivos_repetidos.items():
             print(f"\nHash: {hash_arquivo}")
             for caminho in caminhos:
                 print(f"  - {caminho}")
     else:
-        print("\nNenhum arquivo duplicado encontrado.")
-        
-    # Exibir dados estatísticos
-    print(f"\nTotal de arquivos na pasta: {total_arquivos}")
-    print(f"Total de arquivos duplicados: {total_arquivos_duplicados}")
+        print("\nNenhum arquivo repetido encontrado.")
