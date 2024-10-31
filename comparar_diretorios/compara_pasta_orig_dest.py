@@ -30,7 +30,7 @@ def listar_arquivos_com_hash_completo(caminho_pasta, tamanho_bloco=4096):
     return arquivos_com_hash
 
 def comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096):
-    """Compara duas pastas e lista arquivos exclusivos de cada uma delas."""
+    """Compara duas pastas e lista arquivos exclusivos de cada uma delas, e a quantidade de arquivos iguais."""
     arquivos_pasta1 = listar_arquivos_com_hash_completo(pasta1, tamanho_bloco)
     arquivos_pasta2 = listar_arquivos_com_hash_completo(pasta2, tamanho_bloco)
 
@@ -59,9 +59,14 @@ def comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096):
     total_exclusivos_pasta1 = len(arquivos_exclusivos_pasta1)
     total_exclusivos_pasta2 = len(arquivos_exclusivos_pasta2)
 
+    # Contagem de arquivos iguais (presentes em ambas as pastas com o mesmo hash)
+    arquivos_iguais = hash_pasta1 & hash_pasta2
+    total_arquivos_iguais = sum(min(len(arquivos_pasta1[hash]), len(arquivos_pasta2[hash])) for hash in arquivos_iguais)
+
     return (arquivos_exclusivos_pasta1, arquivos_exclusivos_pasta2, 
             total_arquivos_pasta1, total_arquivos_pasta2, 
-            total_exclusivos_pasta1, total_exclusivos_pasta2)
+            total_exclusivos_pasta1, total_exclusivos_pasta2, 
+            total_arquivos_iguais)
 
 # Exemplo de uso:
 pasta1 = r'D:\comparar\pastaA'
@@ -69,7 +74,8 @@ pasta2 = r'D:\comparar\pastaB'
 (
     arquivos_exclusivos_pasta1, arquivos_exclusivos_pasta2, 
     total_pasta1, total_pasta2, 
-    total_exclusivos_pasta1, total_exclusivos_pasta2
+    total_exclusivos_pasta1, total_exclusivos_pasta2, 
+    total_arquivos_iguais
 ) = comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096)
 
 # Exibir relatórios
@@ -86,3 +92,4 @@ print(f"\nTotal de arquivos na pasta 1: {total_pasta1}")
 print(f"Total de arquivos na pasta 2: {total_pasta2}")
 print(f"Total de arquivos exclusivos na pasta 1: {total_exclusivos_pasta1}")
 print(f"Total de arquivos exclusivos na pasta 2: {total_exclusivos_pasta2}")
+print(f"Total de arquivos iguais entre as duas pastas: {total_arquivos_iguais}")
