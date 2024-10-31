@@ -30,58 +30,46 @@ def listar_arquivos_com_hash_completo(caminho_pasta, tamanho_bloco=4096):
     return arquivos_com_hash
 
 def comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096):
-    """Compara duas pastas e lista arquivos exclusivos, diferentes e diferenças de tamanho."""
+    """Compara duas pastas e lista arquivos exclusivos de cada uma delas."""
     arquivos_pasta1 = listar_arquivos_com_hash_completo(pasta1, tamanho_bloco)
     arquivos_pasta2 = listar_arquivos_com_hash_completo(pasta2, tamanho_bloco)
 
-    arquivos_diferentes = []
     arquivos_exclusivos_pasta1 = []
     arquivos_exclusivos_pasta2 = []
-    arquivos_tamanho_diferente = []
 
     # Conjuntos de hashes das duas pastas
     hash_pasta1 = set(arquivos_pasta1.keys())
     hash_pasta2 = set(arquivos_pasta2.keys())
 
-    # Arquivos exclusivos de cada pasta
-    hashes_unicos_pasta1 = hash_pasta1 - hash_pasta2
-    hashes_unicos_pasta2 = hash_pasta2 - hash_pasta1
+    # Identificar arquivos exclusivos de cada pasta
+    hashes_exclusivos_pasta1 = hash_pasta1 - hash_pasta2
+    hashes_exclusivos_pasta2 = hash_pasta2 - hash_pasta1
 
-    for hash_arquivo in hashes_unicos_pasta1:
+    for hash_arquivo in hashes_exclusivos_pasta1:
         caminhos_pasta1 = arquivos_pasta1[hash_arquivo]
         arquivos_exclusivos_pasta1.extend(caminhos_pasta1)
     
-    for hash_arquivo in hashes_unicos_pasta2:
+    for hash_arquivo in hashes_exclusivos_pasta2:
         caminhos_pasta2 = arquivos_pasta2[hash_arquivo]
         arquivos_exclusivos_pasta2.extend(caminhos_pasta2)
 
-    # Comparar tamanhos de arquivos comuns
-    for hash_arquivo in (hash_pasta1 & hash_pasta2):
-        caminho_arquivo_pasta1 = arquivos_pasta1[hash_arquivo][0]
-        caminho_arquivo_pasta2 = arquivos_pasta2[hash_arquivo][0]
-
-        tamanho_pasta1 = os.path.getsize(caminho_arquivo_pasta1)
-        tamanho_pasta2 = os.path.getsize(caminho_arquivo_pasta2)
-        
-        if tamanho_pasta1 != tamanho_pasta2:
-            arquivos_tamanho_diferente.append((caminho_arquivo_pasta1, caminho_arquivo_pasta2))
-
-    # Contagem de arquivos em cada pasta e arquivos diferentes
+    # Contagem de arquivos em cada pasta e arquivos exclusivos
     total_arquivos_pasta1 = sum(len(caminhos) for caminhos in arquivos_pasta1.values())
     total_arquivos_pasta2 = sum(len(caminhos) for caminhos in arquivos_pasta2.values())
-    total_diferentes = len(hashes_unicos_pasta2)
+    total_exclusivos_pasta1 = len(arquivos_exclusivos_pasta1)
+    total_exclusivos_pasta2 = len(arquivos_exclusivos_pasta2)
 
     return (arquivos_exclusivos_pasta1, arquivos_exclusivos_pasta2, 
-            arquivos_diferentes, arquivos_tamanho_diferente, 
-            total_arquivos_pasta1, total_arquivos_pasta2, total_diferentes)
+            total_arquivos_pasta1, total_arquivos_pasta2, 
+            total_exclusivos_pasta1, total_exclusivos_pasta2)
 
 # Exemplo de uso:
 pasta1 = r'D:\comparar\pastaA'
 pasta2 = r'D:\comparar\pastaB'
 (
     arquivos_exclusivos_pasta1, arquivos_exclusivos_pasta2, 
-    arquivos_diferentes, arquivos_tamanho_diferente, 
-    total_pasta1, total_pasta2, total_diferentes
+    total_pasta1, total_pasta2, 
+    total_exclusivos_pasta1, total_exclusivos_pasta2
 ) = comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096)
 
 # Exibir relatórios
@@ -93,15 +81,8 @@ print("\nArquivos exclusivos na pasta 2:")
 for caminho in arquivos_exclusivos_pasta2:
     print(f"  - {caminho}")
 
-print("\nArquivos na pasta 2 que não existem ou são diferentes na pasta 1:")
-for caminho in arquivos_diferentes:
-    print(f"  - {caminho}")
-
-print("\nArquivos com tamanhos diferentes entre as pastas:")
-for caminho1, caminho2 in arquivos_tamanho_diferente:
-    print(f"  - {caminho1} <-> {caminho2}")
-
 # Exibir as contagens de arquivos
 print(f"\nTotal de arquivos na pasta 1: {total_pasta1}")
 print(f"Total de arquivos na pasta 2: {total_pasta2}")
-print(f"Total de arquivos que são diferentes ou não existem na pasta 1: {total_diferentes}")
+print(f"Total de arquivos exclusivos na pasta 1: {total_exclusivos_pasta1}")
+print(f"Total de arquivos exclusivos na pasta 2: {total_exclusivos_pasta2}")
