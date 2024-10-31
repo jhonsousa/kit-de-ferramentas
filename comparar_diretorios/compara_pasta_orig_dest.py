@@ -1,21 +1,22 @@
 import os
 import hashlib
 
-def calcular_hash_inicial_arquivo(caminho_arquivo, tamanho_bloco=4096):
-    """Calcula o hash SHA-256 de um bloco inicial de um arquivo."""
+def calcular_hash_arquivo_completo(caminho_arquivo, tamanho_bloco=4096):
+    """Calcula o hash SHA-256 de um arquivo inteiro, lendo em blocos."""
     sha256 = hashlib.sha256()
     with open(caminho_arquivo, 'rb') as f:
-        bloco = f.read(tamanho_bloco)
-        sha256.update(bloco)
+        # Lê o arquivo em blocos até o final
+        for bloco in iter(lambda: f.read(tamanho_bloco), b""):
+            sha256.update(bloco)
     return sha256.hexdigest()
 
-def listar_arquivos_com_hash_inicial(caminho_pasta, tamanho_bloco=4096):
-    """Lista todos os arquivos de uma pasta e seus hashes iniciais."""
+def listar_arquivos_com_hash_completo(caminho_pasta, tamanho_bloco=4096):
+    """Lista todos os arquivos de uma pasta e seus hashes completos."""
     arquivos_com_hash = {}
     for raiz, _, arquivos in os.walk(caminho_pasta):
         for nome_arquivo in arquivos:
             caminho_completo = os.path.join(raiz, nome_arquivo)
-            hash_arquivo = calcular_hash_inicial_arquivo(caminho_completo, tamanho_bloco)
+            hash_arquivo = calcular_hash_arquivo_completo(caminho_completo, tamanho_bloco)
             if hash_arquivo in arquivos_com_hash:
                 arquivos_com_hash[hash_arquivo].append(caminho_completo)
             else:
@@ -23,9 +24,9 @@ def listar_arquivos_com_hash_inicial(caminho_pasta, tamanho_bloco=4096):
     return arquivos_com_hash
 
 def comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096):
-    """Compara duas pastas usando o hash de blocos iniciais e lista arquivos que estão na pasta 2 e não existem ou são diferentes da pasta 1."""
-    arquivos_pasta1 = listar_arquivos_com_hash_inicial(pasta1, tamanho_bloco)
-    arquivos_pasta2 = listar_arquivos_com_hash_inicial(pasta2, tamanho_bloco)
+    """Compara duas pastas usando o hash completo dos arquivos e lista arquivos que estão na pasta 2 e não existem ou são diferentes da pasta 1."""
+    arquivos_pasta1 = listar_arquivos_com_hash_completo(pasta1, tamanho_bloco)
+    arquivos_pasta2 = listar_arquivos_com_hash_completo(pasta2, tamanho_bloco)
 
     arquivos_diferentes = []
 
@@ -49,8 +50,8 @@ def comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096):
     return arquivos_diferentes, total_arquivos_pasta1, total_arquivos_pasta2, total_arquivos_diferentes
 
 # Exemplo de uso:
-pasta1 = r'D:\teste\pasta1'
-pasta2 = r'D:\teste\pasta2'
+pasta1 = r'D:\comparar\pastaA'
+pasta2 = r'D:\comparar\pastaB'
 arquivos_diferentes, total_pasta1, total_pasta2, total_diferentes = comparar_pastas_diferentes(pasta1, pasta2, tamanho_bloco=4096)
 
 # Exibir arquivos que estão na pasta2 e são diferentes da pasta1
