@@ -3,6 +3,13 @@ import sys
 import hashlib
 from tqdm import tqdm
 
+def formatar_tamanho(bytes):
+    """Formata o tamanho em bytes para uma unidade legível (KB, MB, GB)."""
+    for unidade in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if bytes < 1024:
+            return f"{bytes:.2f} {unidade}"
+        bytes /= 1024
+
 def calcular_hash_arquivo(caminho_arquivo, tamanho_bloco=4096):
     """Calcula o hash SHA-256 de um arquivo inteiro, lendo em blocos."""
     sha256 = hashlib.sha256()
@@ -12,30 +19,52 @@ def calcular_hash_arquivo(caminho_arquivo, tamanho_bloco=4096):
     return sha256.hexdigest()
 
 def encontrar_arquivos_repetidos(caminho_pasta, tamanho_bloco=4096):
-    """Varre a pasta e encontra arquivos repetidos com base no hash SHA-256."""
-    arquivos_por_hash = {}
+    """Varre a pasta e encontra arquivos repetidos com base no tamanho e no hash SHA-256."""
+    arquivos_por_tamanho = {}
     total_arquivos = sum(len(arquivos) for _, _, arquivos in os.walk(caminho_pasta))
+    maior_arquivo = (None, 0)  # Armazenará (caminho, tamanho) do maior arquivo
     
-    with tqdm(total=total_arquivos, desc="Calculando hashes dos arquivos") as pbar:
+    # Agrupamento inicial por tamanho de arquivo
+    with tqdm(total=total_arquivos, desc="Verificando tamanhos dos arquivos") as pbar:
         for raiz, _, arquivos in os.walk(caminho_pasta):
             for nome_arquivo in arquivos:
                 caminho_completo = os.path.join(raiz, nome_arquivo)
-                hash_arquivo = calcular_hash_arquivo(caminho_completo, tamanho_bloco)
+                tamanho = os.path.getsize(caminho_completo)
                 
-                if hash_arquivo in arquivos_por_hash:
-                    arquivos_por_hash[hash_arquivo].append(caminho_completo)
+                if tamanho > maior_arquivo[1]:
+                    maior_arquivo = (caminho_completo, tamanho)
+                
+                if tamanho in arquivos_por_tamanho:
+                    arquivos_por_tamanho[tamanho].append(caminho_completo)
                 else:
-                    arquivos_por_hash[hash_arquivo] = [caminho_completo]
+                    arquivos_por_tamanho[tamanho] = [caminho_completo]
                 
                 pbar.update(1)
 
-    # Filtrar hashes com mais de um arquivo (arquivos repetidos)
-    arquivos_repetidos = {hash: caminhos for hash, caminhos in arquivos_por_hash.items() if len(caminhos) > 1}
+    # Segundo agrupamento: arquivos com o mesmo tamanho e hash
+    arquivos_repetidos = {}
+    espaco_repetidos = 0  # Para calcular o espaço que será liberado
+    with tqdm(total=len(arquivos_por_tamanho), desc="Calculando hashes dos arquivos") as pbar:
+        for arquivos_mesmo_tamanho in arquivos_por_tamanho.values():
+            if len(arquivos_mesmo_tamanho) > 1:  # Somente verifica hash se houver arquivos com o mesmo tamanho
+                for caminho in arquivos_mesmo_tamanho:
+                    hash_arquivo = calcular_hash_arquivo(caminho, tamanho_bloco)
+                    
+                    if hash_arquivo in arquivos_repetidos:
+                        arquivos_repetidos[hash_arquivo].append(caminho)
+                        espaco_repetidos += os.path.getsize(caminho)  # Contabiliza o espaço dos repetidos
+                    else:
+                        arquivos_repetidos[hash_arquivo] = [caminho]
+            
+            pbar.update(1)
+    
+    # Filtrar para manter apenas os hashes com mais de um arquivo (arquivos repetidos)
+    arquivos_repetidos = {hash: caminhos for hash, caminhos in arquivos_repetidos.items() if len(caminhos) > 1}
     
     # Contagem de grupos de arquivos repetidos
     total_grupos_repetidos = len(arquivos_repetidos)
     
-    return arquivos_repetidos, total_arquivos, total_grupos_repetidos
+    return arquivos_repetidos, total_arquivos, total_grupos_repetidos, maior_arquivo, espaco_repetidos
 
 def excluir_arquivos_repetidos(arquivos_repetidos):
     """Exclui arquivos repetidos, mantendo apenas um de cada grupo."""
@@ -66,7 +95,7 @@ if __name__ == "__main__":
         sys.exit(1)
     
     pasta = sys.argv[1]  # Caminho da pasta fornecido como argumento
-    arquivos_repetidos, total_arquivos, total_grupos_repetidos = encontrar_arquivos_repetidos(pasta)
+    arquivos_repetidos, total_arquivos, total_grupos_repetidos, maior_arquivo, espaco_repetidos = encontrar_arquivos_repetidos(pasta)
 
     # Exibir arquivos repetidos
     if arquivos_repetidos:
@@ -81,6 +110,10 @@ if __name__ == "__main__":
     # Exibir dados estatísticos
     print(f"\nTotal de arquivos na pasta: {total_arquivos}")
     print(f"Total de grupos de arquivos repetidos: {total_grupos_repetidos}")
+    # Exibir informações sobre o arquivo de maior tamanho
+    if maior_arquivo[0]:
+        print(f"\nArquivo de maior tamanho: {maior_arquivo[0]} ({formatar_tamanho(maior_arquivo[1])})")
+    print(f"Espaço potencial a ser liberado se todos os arquivos repetidos forem apagados: {formatar_tamanho(espaco_repetidos)}")
 
     # Perguntar ao usuário se deseja excluir os arquivos repetidos
     if arquivos_repetidos:
